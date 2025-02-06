@@ -259,6 +259,6 @@ PUT /api/users/profile/password
 
 <div align="center">
 
-**[← Setup](setup.md)** | **[Features →](../features/README.md)**
+**[← Quick start](getting-started/quickstart)** | **[Features →](../features/README.md)**
 
 </div>

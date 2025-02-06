@@ -1,5 +1,3 @@
-# Welcome to Mockgee
-
 <div align="center">
 
 # 🚀 Mockgee
@@ -103,6 +101,6 @@ Mockgee is licensed under the [MIT License](LICENSE).
 
 <div align="center">
 
-**[Get Started →](getting-started/setup.md)**
+**[Get Started →](guides/creating-mocks)**
 
 </div>

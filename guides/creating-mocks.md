@@ -1,249 +1,334 @@
-# Response Mapping
+# Creating Mocks
 
 <div align="center">
 
-# 🔄 Response Mapping
-### Inject Request Data into Mock Responses
+# 🎯 Creating Mock APIs
+### A Complete Guide to Creating and Managing Mocks in Mockgee
 
-[![Feature Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://docs.mockgee.com/features/mapping)
-[![Use Case](https://img.shields.io/badge/Use%20Case-Dynamic_Response-blue?style=for-the-badge)](https://docs.mockgee.com/features/mapping)
+[![Guide Type](https://img.shields.io/badge/Guide-Getting_Started-success?style=for-the-badge)](https://docs.mockgee.com/guides/creating-mocks)
+[![Level](https://img.shields.io/badge/Level-Beginner-blue?style=for-the-badge)](https://docs.mockgee.com/guides/creating-mocks)
 
 </div>
 
 ## Overview
 
-Response Mapping allows you to dynamically inject data from incoming requests into your mock responses. Use data from request payload, query parameters, or path parameters to create contextual responses.
+This guide walks you through the process of creating mock APIs in Mockgee, from basic endpoints to complex scenarios with dynamic responses and request matching.
 
-## Key Features
+## Quick Start
 
-### 🎯 Data Source Support
-- Request body mapping
-- Query parameter injection
-- Path parameter usage
-- Header value access
+### Creating Your First Mock
 
-### 🔄 Mapping Syntax
-Use `$request` to reference request data:
-- `$request.body` - Access request payload
-- `$request.query` - Access query parameters
-- `$request.params` - Access path parameters
-- `$request.headers` - Access request headers
+1. **Access Mock Creation**
+   ```
+   Navigation: Mock → Add New Mock
+   ```
 
-## Implementation Guide
+2. **Basic Configuration**
+   ```javascript
+   {
+     "endpoint": "/api/hello",
+     "method": "GET",
+     "response": {
+       "status": 200,
+       "body": {
+         "message": "Hello, World!"
+       }
+     }
+   }
+   ```
 
-### Basic Mapping
+## Methods of Creation
 
+### 1. 📝 Manual Creation
+
+#### Step-by-Step Process
+
+1. **Define Endpoint Details**
+   ```javascript
+   {
+     "name": "User Profile API",
+     "endpoint": "/api/users/{userId}",
+     "method": "GET"
+   }
+   ```
+
+2. **Configure Response**
+   ```javascript
+   {
+     "response": {
+       "status": 200,
+       "headers": {
+         "Content-Type": "application/json"
+       },
+       "body": {
+         "id": "$$.uuid",
+         "name": "$$.name",
+         "email": "user@example.com"
+       }
+     }
+   }
+   ```
+
+3. **Add Request Matchers**
+   ```javascript
+   {
+     "matchers": {
+       "params": {
+         "userId": "12345"
+       },
+       "headers": {
+         "Authorization": "Bearer *"
+       }
+     }
+   }
+   ```
+
+### 2. 📥 Import from Specification
+
+#### Using OpenAPI/Swagger
 ```javascript
-// Request
-POST /api/users
-{
-    "name": "John Doe",
-    "email": "john@example.com"
-}
+// 1. Navigate to Importer
+Mock → Importer → OpenAPI
 
-// Response Configuration
+// 2. Upload or paste specification
 {
-    "response": {
-        "body": {
-            "message": "Hello, $request.body.name!",
-            "userEmail": "$request.body.email"
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Sample API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/users": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
         }
+      }
     }
-}
-
-// Generated Response
-{
-    "message": "Hello, John Doe!",
-    "userEmail": "john@example.com"
+  }
 }
 ```
 
-### Advanced Mapping Scenarios
-
-#### 1. Nested Object Mapping
+#### Using Postman Collection
 ```javascript
-// Request
-POST /api/orders
-{
-    "order": {
-        "items": [
-            {
-                "productId": "123",
-                "quantity": 2
-            }
-        ],
-        "shipping": {
-            "address": "123 Main St"
-        }
-    }
-}
+// 1. Export collection from Postman
+// 2. Import in Mockgee
+Mock → Importer → Postman Collection
+```
 
-// Response Configuration
+### 3. 🔄 API Recording
+
+1. **Configure Proxy**
+   ```javascript
+   {
+     "recording": {
+       "target": "https://api.example.com",
+       "enabled": true,
+       "saveResponses": true
+     }
+   }
+   ```
+
+2. **Start Recording**
+   ```
+   Mock → Record → Start Recording
+   ```
+
+## Advanced Mock Creation
+
+### 1. Dynamic Response Configuration
+
+```javascript
 {
-    "response": {
-        "body": {
-            "confirmation": {
-                "items": "$request.body.order.items",
-                "shippingTo": "$request.body.order.shipping.address"
-            }
-        }
+  "endpoint": "/api/users",
+  "method": "POST",
+  "response": {
+    "body": {
+      "id": "$$.uuid",
+      "createdAt": "$$.timestamp",
+      "name": "$request.body.name",
+      "type": "$$.enum(free,premium,enterprise)"
     }
+  }
 }
 ```
 
-#### 2. Query Parameter Mapping
-```javascript
-// Request
-GET /api/search?category=books&sort=price
+### 2. Multiple Response Scenarios
 
-// Response Configuration
+```javascript
 {
-    "response": {
-        "body": {
-            "searchResults": [],
-            "filters": {
-                "appliedCategory": "$request.query.category",
-                "sortOrder": "$request.query.sort"
-            }
+  "endpoint": "/api/orders/{orderId}",
+  "responses": [
+    {
+      "condition": {
+        "params": {
+          "orderId": "123"
         }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "123",
+          "status": "completed"
+        }
+      }
+    },
+    {
+      "condition": {
+        "params": {
+          "orderId": "456"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "456",
+          "status": "pending"
+        }
+      }
     }
+  ]
 }
 ```
 
-#### 3. Path Parameter Mapping
-```javascript
-// Request
-GET /api/users/123/profile
+### 3. Error Scenarios
 
-// Response Configuration
+```javascript
 {
-    "response": {
-        "body": {
-            "userId": "$request.params.userId",
-            "requestedAt": "$$.timestamp"
+  "endpoint": "/api/secure/data",
+  "responses": [
+    {
+      "condition": {
+        "headers": {
+          "Authorization": "Bearer valid-token"
         }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "data": "Secure content"
+        }
+      }
+    },
+    {
+      "condition": {
+        "headers": {
+          "Authorization": "*"
+        }
+      },
+      "response": {
+        "status": 401,
+        "body": {
+          "error": "Invalid token"
+        }
+      }
     }
+  ]
 }
 ```
 
-## Advanced Features
+## Organization & Management
 
-### 🔄 Conditional Mapping
-Map different responses based on request data:
+### 1. Project Structure
+```
+Mock Project
+├── Authentication
+│   ├── Login
+│   ├── Logout
+│   └── Reset Password
+├── Users
+│   ├── Get User
+│   ├── Update User
+│   └── Delete User
+└── Orders
+    ├── Create Order 
+    └── Get Orders
+```
 
+### 2. Version Management
 ```javascript
 {
-    "response": {
-        "body": {
-            "status": {
-                "if": "$request.body.type == 'premium'",
-                "then": "Priority Processing",
-                "else": "Standard Processing"
-            },
-            "estimatedTime": {
-                "if": "$request.body.type == 'premium'",
-                "then": "1-2 days",
-                "else": "3-5 days"
-            }
-        }
+  "endpoint": "/api/v1/users",
+  "variants": [
+    {
+      "version": "v1",
+      "response": {
+        // Version 1 response
+      }
+    },
+    {
+      "version": "v2",
+      "response": {
+        // Version 2 response
+      }
     }
+  ]
 }
 ```
 
-### 📝 Data Transformation
-Transform request data before mapping:
+## Testing Your Mocks
 
+### 1. Using the Built-in Tester
+```
+Mock → Select Mock → Test
+```
+
+### 2. Using cURL
+```bash
+# Test GET endpoint
+curl http://localhost:8085/api/hello
+
+# Test POST endpoint
+curl -X POST http://localhost:8085/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "John Doe"}'
+```
+
+### 3. Using Postman
+1. Set URL to `http://localhost:8085/your-endpoint`
+2. Configure method and headers
+3. Send request
+
+## Common Patterns
+
+### 1. Authentication Flow
 ```javascript
 {
-    "response": {
-        "body": {
-            "upperName": "$uppercase($request.body.name)",
-            "formattedDate": "$formatDate($request.body.date, 'YYYY-MM-DD')",
-            "totalPrice": "$multiply($request.body.quantity, $request.body.price)"
-        }
+  "endpoint": "/api/auth/login",
+  "method": "POST",
+  "response": {
+    "body": {
+      "token": "$$.uuid",
+      "expiresIn": 3600,
+      "user": {
+        "id": "$request.body.username",
+        "role": "$$.enum(user,admin)"
+      }
     }
+  }
 }
 ```
 
-### 🔍 Complex Data Manipulation
-Combine multiple request values:
-
+### 2. CRUD Operations
 ```javascript
 {
-    "response": {
-        "body": {
-            "fullAddress": "$concat([
-                $request.body.address.street,
-                ', ',
-                $request.body.address.city,
-                ', ',
-                $request.body.address.country
-            ])"
-        }
+  "endpoint": "/api/resources",
+  "methods": {
+    "GET": {
+      "response": {/* List response */}
+    },
+    "POST": {
+      "response": {/* Create response */}
+    },
+    "PUT": {
+      "response": {/* Update response */}
+    },
+    "DELETE": {
+      "response": {/* Delete response */}
     }
-}
-```
-
-## Best Practices
-
-### 1. Data Validation
-- Verify request data exists
-- Provide default values
-- Handle missing fields
-
-### 2. Security
-- Sanitize mapped data
-- Validate data types
-- Filter sensitive information
-
-### 3. Performance
-- Optimize mapping paths
-- Use efficient transformations
-- Cache when possible
-
-## Common Use Cases
-
-### 1. Form Submission Response
-```javascript
-// Request
-POST /api/submit
-{
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "john@example.com"
-}
-
-// Response Configuration
-{
-    "response": {
-        "body": {
-            "confirmation": {
-                "message": "Thank you, $request.body.firstName $request.body.lastName!",
-                "emailSentTo": "$request.body.email",
-                "submittedAt": "$$.timestamp"
-            }
-        }
-    }
-}
-```
-
-### 2. Search API Response
-```javascript
-// Request
-GET /api/search?term=example&page=1
-
-// Response Configuration
-{
-    "response": {
-        "body": {
-            "searchTerm": "$request.query.term",
-            "currentPage": "$request.query.page",
-            "results": [],
-            "metadata": {
-                "query": "$request.query"
-            }
-        }
-    }
+  }
 }
 ```
 
@@ -251,26 +336,26 @@ GET /api/search?term=example&page=1
 
 ### Common Issues
 
-1. **Missing Data**
-   - Check request format
-   - Verify mapping paths
-   - Add default values
+1. **Mock Not Matching**
+   - Verify endpoint path
+   - Check HTTP method
+   - Validate request matchers
 
-2. **Type Mismatches**
-   - Validate data types
-   - Use appropriate transformations
-   - Check format consistency
+2. **Invalid Response**
+   - Review response format
+   - Check dynamic data syntax
+   - Verify JSON structure
 
 ## Next Steps
 
-- Explore [Dynamic Mock](dynamic-mock.md)
-- Learn about [Request Matcher](request-matcher.md)
-- Check [Response Delay](delay.md) feature
+- Explore [Dynamic Mock](../features/dynamic-mock.md)
+- Learn about [Request Matcher](../features/request-matcher.md)
+- Review [Best Practices](best-practices.md)
 
 ---
 
 <div align="center">
 
-**[← Proxy Mode](proxy.md)** | **[Response Delay →](delay.md)**
+**[← Setup Guide](../getting-started/setup.md)** | **[Best Practices →](best-practices.md)**
 
 </div>

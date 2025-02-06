@@ -22,7 +22,7 @@ Dynamic Mocking in Mockgee allows you to create flexible, realistic API response
 - Support for complex matching patterns
 
 ### 🎯 Request-Based Response Selection
-- Match based on headers, query parameters, or body content
+- Match based on path parameters, headers, query parameters, or body content
 - Support for path parameters and dynamic routing
 - Conditional response selection
 

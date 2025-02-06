@@ -1,6 +1,6 @@
 * Getting Started
-  * [Quick Start](quickstart.md)
-  * [Installation](installation.md)
+  * [Quick Start](getting-started/quickstart.md)
+  * [User Account](getting-started/authentication.md)
 
 * Features
   * [Dynamic Mocking](features/dynamic-mock.md)

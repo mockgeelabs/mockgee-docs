@@ -209,6 +209,6 @@ sudo chown -R $(whoami):$(whoami) ~/.mockgee
 
 <div align="center">
 
-**[← Introduction](../README.md)** | **[Setup Guide →](setup.md)**
+**[← Introduction](../README.md)** | **[Create Mock →](guides/creating-mocks)**
 
 </div>
