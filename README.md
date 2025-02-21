@@ -25,11 +25,11 @@ Mockgee is your comprehensive solution for API mocking needs, trusted by industr
 Get up and running in seconds with Docker:
 
 ```bash
-docker run -p 8080:8080 -p 8085:8085 mockgee/mockgee:latest
+docker run -p 8000:8000 -p 8085:8085 mockgee/mockgee:latest
 ```
 
 Access your Mockgee instance:
-- 🖥️ UI Dashboard: [http://localhost:8080](http://localhost:8080)
+- 🖥️ UI Dashboard: [http://localhost:8000](http://localhost:8000)
 - 🔌 Mock API Endpoint: Port 8085
 
 ## Features at a Glance

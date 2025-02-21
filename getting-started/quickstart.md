@@ -21,7 +21,7 @@ Welcome to Mockgee! This guide will help you set up Mockgee and create your firs
 Get started instantly with our Docker image:
 
 ```bash
-docker run -p 8080:8080 -p 8085:8085 mockgee/mockgee:latest
+docker run -p 8000:8000 -p 8085:8085 mockgee/mockgee:latest
 ```
 
 ### 🐧 Ubuntu Installation
@@ -36,7 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/mockgeelabs/mockgee-install/main/mo
 
 ### 1. 🖥️ Access the Dashboard
 ```
-Open your browser → http://localhost:8080
+Open your browser → http://localhost:8000
 ```
 
 ### 2. 🆕 Create New Mock
@@ -162,11 +162,11 @@ curl http://localhost:8085/api/users/1
 #### 1. 🔍 Port Conflicts
 ```bash
 # Check if ports are in use
-lsof -i :8080
+lsof -i :8000
 lsof -i :8085
 
 # Alternative ports
-docker run -p 8081:8080 -p 8086:8085 mockgee/mockgee:latest
+docker run -p 8000:8000 -p 8086:8085 mockgee/mockgee:latest
 ```
 
 #### 2. 🐳 Docker Issues
@@ -197,7 +197,7 @@ sudo chown -R $(whoami):$(whoami) ~/.mockgee
 ## Quick Reference
 
 ### 🔧 Port Configuration
-- UI Dashboard: 8080
+- UI Dashboard: 8000
 - Mock API Endpoint: 8085
 
 ### 📁 Default Locations
