@@ -3,7 +3,7 @@
 <!-- ![logo](_media/icon.svg) -->
 
 
-# Mockgee <small>3.0.0-beta</small>
+# Mockgee <small>3.0.x-beta</small>
 
 > An API mocking platform
 

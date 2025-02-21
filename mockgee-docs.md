@@ -9,7 +9,7 @@
 Get started with Mockgee using Docker:
 
 ```bash
-docker run -p 8080:8080 -p 8085:8085 mockgee/mockgee:latest
+docker run -p 8000:8000 -p 8085:8085 mockgee/mockgee:latest
 ```
 
 For Ubuntu users, use our single-line installation:
@@ -19,7 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/mockgeelabs/mockgee-install/main/mo
 ```
 
 ### Accessing Mockgee
-- Web UI: http://localhost:8080
+- Web UI: http://localhost:8000
 - Mock API Endpoint: Port 8085
 
 ## Core Features
@@ -128,7 +128,7 @@ Built-in Cross-Origin Resource Sharing support for seamless cross-domain testing
 - Configure appropriate CORS settings for web applications
 
 ## Troubleshooting
-- Verify correct ports (8080 for UI, 8085 for API)
+- Verify correct ports (8000 for UI, 8085 for API)
 - Check request matcher configurations
 - Validate import file formats
 - Review proxy settings if using proxy mode

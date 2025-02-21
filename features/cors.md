@@ -120,7 +120,7 @@ Control header access:
         "enabled": true,
         "allowedOrigins": [
             "http://localhost:3000",
-            "http://localhost:8080"
+            "http://localhost:8000"
         ],
         "allowedMethods": ["*"],
         "allowedHeaders": ["*"],
