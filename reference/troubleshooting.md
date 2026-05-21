@@ -1,6 +1,6 @@
 # Troubleshooting
 
-## Mock Request Returns Tenant Not Found
+## Mock Request Returns Workspace Not Found
 
 Check that you are calling the mock dataplane domain:
 

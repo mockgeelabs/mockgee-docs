@@ -1,251 +1,172 @@
-# Fake Data
+# Fake Data and Response Templating
 
-<div align="center">
+Mockgee supports two dynamic data systems:
 
-# 🎲 Fake Data Generator
-### Generate Dynamic, Realistic Test Data on the Fly
+- **Recommended:** `{{...}}` response templates for Faker data, request echoing, counters, timestamps, random values, and response/header templating.
+- **Legacy:** `$$.` dynamic placeholders such as `$$.uuid`, `$$.timestamp`, and `$$.enum(...)`. Existing mocks continue to work.
 
-[![Feature Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://docs.mockgee.com/features/faker)
-[![Use Case](https://img.shields.io/badge/Use%20Case-Testing-blue?style=for-the-badge)](https://docs.mockgee.com/features/faker)
+Use the `{{...}}` template syntax for new mocks. It is more expressive because it can read the incoming request and use `@faker-js/faker` for realistic data.
 
-</div>
+## Where Templates Work
 
-## Overview
+Templates are evaluated at runtime on matched mock responses.
 
-The Fake Data Generator in Mockgee allows you to create dynamic, realistic test data for your API mocks. Using simple syntax with the `$$.` prefix, you can generate various types of data that changes with each API call.
+They work in:
 
-## Data Types at a Glance
+- JSON response body string values
+- text response bodies
+- XML response bodies
+- response headers
 
-| Type | Description | Example Usage | Sample Output |
-|------|-------------|---------------|---------------|
-| uuid | Unique identifier | `$$.uuid` | "123e4567-e89b-12d3-a456-426614174000" |
-| ip | IP address | `$$.ip` | "192.168.1.1" |
-| name | Random name | `$$.name` | "John Smith" |
-| int | Integer number | `$$.int(6)` | 123456 |
-| float | Decimal number | `$$.float(4,2)` | 12.34 |
-| timestamp | Current time | `$$.timestamp` | "2024-02-28T12:25:41.994Z" |
-| boolean | True/false value | `$$.boolean` | true |
-| enum | Custom values | `$$.enum(red,green,blue)` | "green" |
+Unknown `{{...}}` expressions are left unchanged, so literal template-looking text is safe.
 
-## Implementation Guide
+## Faker Examples
 
-### Basic Usage
+Use `{{faker.<namespace>.<method>}}` to call Faker helpers.
 
 ```json
 {
-    "userId": "$$.uuid",
-    "createdAt": "$$.timestamp",
-    "profile": {
-        "name": "$$.name",
-        "isActive": "$$.boolean",
-        "loginCount": "$$.int(3)"
-    }
+  "id": "{{uuid}}",
+  "name": "{{faker.person.fullName}}",
+  "email": "{{faker.internet.email}}",
+  "company": "{{faker.company.name}}",
+  "city": "{{faker.location.city}}",
+  "createdAt": "{{now 'iso'}}"
 }
 ```
 
-### JSON Response Example
+Common examples:
+
+| Template | Example output |
+| --- | --- |
+| `{{faker.person.fullName}}` | `Avery Johnson` |
+| `{{faker.internet.email}}` | `avery.johnson@example.com` |
+| `{{faker.location.city}}` | `Dubai` |
+| `{{faker.company.name}}` | `Acme Solutions LLC` |
+| `{{faker.phone.number}}` | `+1 555 123 4567` |
+| `{{faker.number.int}}` | `48213` |
+| `{{faker.string.uuid}}` | `b1f0c5e0-7b1d-4c3e-9f6c-9b3b8f0d7d52` |
+
+Mockgee walks the Faker dotted path and calls the final method with no arguments. If a Faker helper needs required arguments, prefer one of Mockgee's built-in helpers below or use a static sample value.
+
+## Built-In Template Helpers
+
+| Helper | Description |
+| --- | --- |
+| `{{uuid}}` | Random UUID v4 |
+| `{{now}}` | Current Unix epoch in milliseconds |
+| `{{now 'iso'}}` | Current ISO-8601 timestamp |
+| `{{now 'unix'}}` | Current Unix epoch in seconds |
+| `{{random 1 100}}` | Random integer between 1 and 100 |
+| `{{one-of 'pending' 'shipped' 'failed'}}` | Random value from the provided list |
+| `{{sequence 'orders'}}` | Monotonic counter by workspace and sequence name |
+
+Example:
 
 ```json
 {
-    "order": {
-        "id": "$$.uuid",
-        "customer": {
-            "id": "$$.int(6)",
-            "name": "$$.name",
-            "email": "customer@example.com"
-        },
-        "amount": "$$.float(4,2)",
-        "status": "$$.enum(pending,processing,completed)",
-        "ipAddress": "$$.ip",
-        "timestamp": "$$.timestamp"
-    }
+  "orderId": "ord_{{sequence 'orders'}}",
+  "status": "{{one-of 'pending' 'paid' 'shipped'}}",
+  "priority": "{{random 1 5}}",
+  "issuedAt": "{{now 'iso'}}"
 }
 ```
 
-### XML Response Example
+## Request-Aware Templates
 
-```xml
-<?xml version="1.0"?>
-<order>
-    <id>$$.uuid</id>
-    <customerInfo>
-        <name>$$.name</name>
-        <status>$$.enum(active,inactive)</status>
-    </customerInfo>
-    <amount>$$.float(5,2)</amount>
-    <isUrgent>$$.boolean</isUrgent>
-</order>
+Templates can copy values from the incoming request.
+
+| Template | Reads from |
+| --- | --- |
+| `{{request.body.email}}` | Parsed JSON request body |
+| `{{request.headers.x-request-id}}` | Request headers, looked up case-insensitively |
+| `{{request.query.limit}}` | Query string |
+| `{{request.path.id}}` | Path parameter from a mock path such as `/customers/{id}` or `/customers/:id` |
+
+Example mock path:
+
+```text
+GET /v1/customers/{id}
 ```
 
-## Detailed Data Types
+Example response:
 
-### 📑 UUID Generator
-Generate universally unique identifiers.
-```javascript
-{
-    "transactionId": "$$.uuid"  // "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-### 🌐 IP Address
-Generate valid IP addresses.
-```javascript
-{
-    "sourceIp": "$$.ip"  // "192.168.1.1"
-}
-```
-
-### 👤 Name Generator
-Generate random names.
-```javascript
-{
-    "firstName": "$$.name",  // "John"
-    "lastName": "$$.name"    // "Smith"
-}
-```
-
-### 🔢 Number Generators
-
-#### Integer (int)
-Generate whole numbers with specific length.
-```javascript
-{
-    "shortCode": "$$.int(3)",     // 123
-    "accountNumber": "$$.int(8)"  // 12345678
-}
-```
-
-#### Integer String (ints)
-Generate numbers in string format.
-```javascript
-{
-    "zipCode": "$$.ints(5)",      // "12345"
-    "phoneNumber": "$$.ints(10)"  // "1234567890"
-}
-```
-
-#### Float
-Generate decimal numbers with specified precision.
-```javascript
-{
-    "price": "$$.float(4,2)",    // 12.34
-    "quantity": "$$.float(3,1)"  // 1.5
-}
-```
-
-### ⏰ Timestamp
-Generate current timestamp in ISO format.
-```javascript
-{
-    "createdAt": "$$.timestamp",  // "2024-02-28T12:25:41.994Z"
-    "updatedAt": "$$.timestamp"   // "2024-02-28T12:25:41.994Z"
-}
-```
-
-### ✅ Boolean
-Generate random true/false values.
-```javascript
-{
-    "isActive": "$$.boolean",    // true
-    "isEnabled": "$$.boolean"    // false
-}
-```
-
-### 📝 Enum
-Generate values from a predefined set.
-```javascript
-{
-    "status": "$$.enum(active,pending,inactive)",
-    "priority": "$$.enum(high,medium,low)",
-    "category": "$$.enum(electronics,books,clothing)"
-}
-```
-
-## Advanced Usage
-
-### Combining Multiple Types
 ```json
 {
-    "transaction": {
-        "id": "$$.uuid",
-        "amount": "$$.float(6,2)",
-        "status": "$$.enum(pending,completed,failed)",
-        "timestamp": "$$.timestamp",
-        "customer": {
-            "id": "$$.int(6)",
-            "ipAddress": "$$.ip",
-            "isVerified": "$$.boolean"
-        }
-    }
+  "id": "{{request.path.id}}",
+  "requestId": "{{request.headers.x-request-id}}",
+  "name": "{{faker.person.fullName}}",
+  "email": "{{request.query.email}}",
+  "servedAt": "{{now 'iso'}}"
 }
 ```
 
-### Complex Data Structures
+Example call:
+
+```bash
+curl "https://<workspace>.<MOCK_BASE_DOMAIN>/v1/customers/cus_123?email=test@example.com" \
+  -H "x-request-id: req_001"
+```
+
+## Header Templates
+
+Response headers can also use templates.
+
 ```json
 {
-    "orders": [
-        {
-            "orderId": "$$.uuid",
-            "items": [
-                {
-                    "productId": "$$.int(5)",
-                    "quantity": "$$.int(2)",
-                    "price": "$$.float(4,2)"
-                },
-                {
-                    "productId": "$$.int(5)",
-                    "quantity": "$$.int(2)",
-                    "price": "$$.float(4,2)"
-                }
-            ],
-            "status": "$$.enum(new,processing,shipped)",
-            "isExpedited": "$$.boolean"
-        }
-    ]
+  "x-mock-request-id": "{{request.headers.x-request-id}}",
+  "x-mock-sequence": "{{sequence 'responses'}}"
 }
 ```
 
-## Best Practices
+## Legacy `$$.` Placeholders
 
-### 1. Data Consistency
-- Use consistent data types across related fields
-- Maintain realistic value ranges
-- Consider data relationships
+Legacy dynamic placeholders remain supported for existing mocks.
 
-### 2. Performance
-- Use appropriate field lengths
-- Balance complexity with response time
-- Consider payload size
+| Placeholder | Description |
+| --- | --- |
+| `$$.uuid` | Unique identifier |
+| `$$.ip` | IP address |
+| `$$.name` | Random name |
+| `$$.int(6)` | Integer with the requested length |
+| `$$.ints(5)` | Numeric string with the requested length |
+| `$$.float(4,2)` | Decimal number |
+| `$$.timestamp` | Current ISO timestamp |
+| `$$.boolean` | Random boolean |
+| `$$.enum(red,green,blue)` | Random value from the list |
 
-### 3. Realism
-- Use appropriate data types for fields
-- Maintain logical relationships
-- Consider business rules
+Example:
 
-## Troubleshooting
+```json
+{
+  "id": "$$.uuid",
+  "createdAt": "$$.timestamp",
+  "status": "$$.enum(active,pending,inactive)"
+}
+```
 
-### Common Issues
+For new mocks, prefer `{{...}}` templates because they support Faker and request-aware values.
 
-1. **Invalid Data Generation**
-   - Verify syntax format
-   - Check supported data types
-   - Validate parameter ranges
+## Choosing the Right Syntax
 
-2. **Inconsistent Data**
-   - Review data type specifications
-   - Check format parameters
-   - Verify enum values
+| Need | Use |
+| --- | --- |
+| Realistic names, emails, companies, addresses | `{{faker...}}` |
+| Echo path, query, header, or body values | `{{request...}}` |
+| Stable per-suite counters | `{{sequence 'name'}}` |
+| Existing mocks already using `$$.` | Keep `$$.` |
+| Simple random legacy values | `$$.` still works, but `{{...}}` is recommended |
+
+## Notes and Limits
+
+- Templates do not execute arbitrary JavaScript.
+- There are no loops or conditionals in response templates.
+- `{{sequence ...}}` counters are in-memory and reset when the server restarts.
+- Faker helpers are called without custom arguments.
+- Legacy `$$.` placeholders and `{{...}}` templates can coexist in the same response.
 
 ## Next Steps
 
-- Learn about [Dynamic Mock](dynamic-mock.md) for complex scenarios
-- Explore [Request Matcher](request-matcher.md) for request handling
-- Check [Best Practices](../guides/best-practices.md) for more tips
-
----
-
-<div align="center">
-
-**[← Request Matcher](request-matcher.md)** | **[Importers →](importers.md)**
-
-</div>
+- Learn about [Dynamic Mocking](dynamic-mock.md) for multiple responses and matchers.
+- Review [Request Matcher](request-matcher.md) for request-specific responses.
+- Use [Response Mapping](mapping.md) for request-to-response copy patterns.

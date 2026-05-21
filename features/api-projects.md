@@ -2,19 +2,20 @@
 
 API Mocks are the main workspace area for REST and GraphQL mock APIs.
 
-## Project Types
+## Mock Types
 
 | Type | Use for |
 | --- | --- |
 | REST API | HTTP endpoints with methods, paths, status codes, headers, and bodies. |
 | GraphQL API | GraphQL operation mocks on a GraphQL endpoint. |
-| AI API | OpenAI-compatible chat completion mocks. AI-specific workflows are managed under **AI Mocks**. |
+
+AI chat mocks, Tool Calls, and MCP server simulation are managed separately under **Build -> AI Mocks**.
 
 ## Create a Mock
 
 1. Open **Build -> API Mocks**.
 2. Select **New endpoint** or start from a template/import.
-3. Choose the API type.
+3. Choose REST API or GraphQL API.
 4. Configure the endpoint or operation.
 5. Save.
 

@@ -9,7 +9,7 @@ This guide gets you from signup to a working mock endpoint.
 3. Mockgee creates your first workspace automatically.
 4. Complete or skip onboarding.
 
-Workspace administration lives under **Administration**. You do not need to create a tenant manually.
+Workspace administration lives under **Administration**. You do not need to create a workspace manually.
 
 ## 2. Understand the URLs
 

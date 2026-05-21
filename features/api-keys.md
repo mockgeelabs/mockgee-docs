@@ -10,7 +10,7 @@ API keys are workspace-scoped credentials for automation and integrations.
 4. Copy the generated key immediately.
 5. Store it in your secret manager or CI environment.
 
-## Runtime Tenant Resolution
+## Runtime Workspace Resolution
 
 Mock runtime calls are normally routed by workspace subdomain:
 

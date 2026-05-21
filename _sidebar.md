@@ -8,12 +8,12 @@
   * [REST and GraphQL](features/rest-graphql.md)
   * [Dynamic Mocking](features/dynamic-mock.md)
   * [Request Matcher](features/request-matcher.md)
-  * [Fake Data](features/fake-data.md)
+  * [Fake Data and Templates](features/fake-data.md)
   * [Default Responses](guides/default-responses.md)
   * [Response Mapping](features/mapping.md)
-  * [Response Delay](features/delay.md)
+  * [Delay and Faults](features/delay.md)
   * [CORS Support](features/cors.md)
-  * [Proxy Mode](features/proxy.md)
+  * [Proxy Fallback](features/proxy.md)
 
 * AI Simulation
   * [AI Mocks](features/ai-mocks.md)

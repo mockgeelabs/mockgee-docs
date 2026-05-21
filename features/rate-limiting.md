@@ -1,272 +1,46 @@
-# Rate Limiting
+# Rate Limits and Quotas
 
-<div align="center">
+Mockgee SaaS applies rate limits and quotas at the platform level to protect the management API and mock dataplane.
 
-# ⚡ Rate Limiting
-### Control and Optimize API Access
+Rate limits are not configured per endpoint from the workspace UI. They are resolved from workspace entitlements and platform defaults.
 
-[![Feature Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://docs.mockgee.com/features/rate-limiting)
-[![Use Case](https://img.shields.io/badge/Use%20Case-Performance-blue?style=for-the-badge)](https://docs.mockgee.com/features/rate-limiting)
+## Runtime Dataplane Limits
 
-</div>
+Mock runtime requests are checked against workspace entitlements. When a workspace exceeds its allowed request volume or rate, Mockgee returns a `429` response.
 
-## Overview
+The effective limits depend on the workspace plan:
 
-Rate limiting in Mockgee helps you control API access, prevent abuse, and ensure optimal performance. Configure limits based on various criteria like IP, tokens, or custom rules.
+- Free workspaces have lower request and running mock limits.
+- Pro and Enterprise workspaces are intended for higher volume and team usage.
+- Enterprise limits can be adjusted by the platform operator.
 
-## Key Features
+## Management API Protection
 
-### 🎯 Limiting Strategies
-- Request-based limits
-- Window-based throttling
-- Token bucket algorithm
-- Custom rate rules
+The management API also has abuse protection for signed-in SaaS operations, with stricter throttling around authentication routes.
 
-### 🔄 Limit Types
-- Global limits
-- Per-endpoint limits
-- Per-client limits
-- Custom criteria
+This protects:
 
-## Implementation Guide
+- sign in and sign up flows
+- password reset attempts
+- workspace administration APIs
+- mock creation and update APIs
 
-### 1. Basic Rate Limiting
+## What Happens When A Limit Is Reached
 
-```javascript
-{
-  "rateLimiting": {
-    "enabled": true,
-    "global": {
-      "requests": 1000,
-      "window": "1h"
-    }
-  }
-}
-```
+When a request is blocked by quota or rate limiting, the client receives a `429 Too Many Requests` response.
 
-### 2. Per-Endpoint Configuration
+Typical next steps:
 
-```javascript
-{
-  "endpoint": "/api/resources",
-  "rateLimiting": {
-    "get": {
-      "requests": 100,
-      "window": "1m"
-    },
-    "post": {
-      "requests": 50,
-      "window": "1m"
-    }
-  }
-}
-```
+1. Check **Administration -> Billing** for current plan and usage.
+2. Reduce high-volume test loops if running locally or in CI.
+3. Move to a higher plan or contact support for Enterprise limits.
 
-### 3. Advanced Configuration
+## Usage Visibility
 
-```javascript
-{
-  "rateLimiting": {
-    "rules": [
-      {
-        "matcher": {
-          "path": "/api/premium/*",
-          "method": "POST"
-        },
-        "limit": {
-          "requests": 200,
-          "window": "1h",
-          "scope": "ip"
-        }
-      },
-      {
-        "matcher": {
-          "headers": {
-            "API-Key": "*"
-          }
-        },
-        "limit": {
-          "requests": 1000,
-          "window": "1d",
-          "scope": "api-key"
-        }
-      }
-    ]
-  }
-}
-```
+Dashboard metrics show invocation activity for the workspace, including total mock API calls, latency, status families, method breakdown, unmatched requests, and AI streaming usage.
 
-## Advanced Features
+## Related Pages
 
-### 1. 🎯 Dynamic Rate Limiting
-
-```javascript
-{
-  "rateLimiting": {
-    "dynamic": {
-      "enabled": true,
-      "factors": {
-        "serverLoad": {
-          "threshold": 80,
-          "reduction": 0.5
-        },
-        "errorRate": {
-          "threshold": 0.05,
-          "reduction": 0.7
-        }
-      }
-    }
-  }
-}
-```
-
-### 2. 🔄 Token Bucket Implementation
-
-```javascript
-{
-  "rateLimiting": {
-    "tokenBucket": {
-      "capacity": 100,
-      "refillRate": 10,
-      "refillInterval": "1s",
-      "initialTokens": 100
-    }
-  }
-}
-```
-
-### 3. 📊 Custom Rate Rules
-
-```javascript
-{
-  "rateLimiting": {
-    "custom": {
-      "rules": [
-        {
-          "condition": "request.headers['User-Type'] === 'premium'",
-          "limit": {
-            "requests": 5000,
-            "window": "1h"
-          }
-        },
-        {
-          "condition": "request.query.priority === 'high'",
-          "limit": {
-            "requests": 2000,
-            "window": "1h"
-          }
-        }
-      ]
-    }
-  }
-}
-```
-
-## Headers and Responses
-
-### Rate Limit Headers
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1635789600
-```
-
-### Rate Limit Response
-
-```javascript
-// When limit exceeded
-{
-  "status": 429,
-  "error": "Too Many Requests",
-  "message": "Rate limit exceeded. Please try again in 60 seconds",
-  "details": {
-    "limitType": "ip",
-    "currentUsage": 100,
-    "limit": 100,
-    "resetAt": "2024-02-05T12:00:00Z"
-  }
-}
-```
-
-## Best Practices
-
-### 1. Configuration Strategy
-- Start with conservative limits
-- Monitor usage patterns
-- Adjust based on metrics
-- Consider user tiers
-
-### 2. Implementation Tips
-- Use appropriate window sizes
-- Set reasonable limits
-- Include buffer capacity
-- Implement graceful degradation
-
-### 3. Error Handling
-- Clear error messages
-- Retry-After headers
-- Graceful fallbacks
-- User notification
-
-## Monitoring and Analytics
-
-### 1. 📊 Usage Tracking
-
-```javascript
-{
-  "monitoring": {
-    "rateLimits": {
-      "track": [
-        "requests_per_second",
-        "limit_exceeded_count",
-        "usage_percentage"
-      ],
-      "alerts": {
-        "threshold": 0.8,
-        "notification": "email"
-      }
-    }
-  }
-}
-```
-
-### 2. 📈 Analytics Dashboard
-
-```
-Navigation: Dashboard → Rate Limits
-```
-- Real-time usage graphs
-- Limit breach alerts
-- Usage patterns
-- Client statistics
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Unexpected Limiting**
-   - Verify limit configuration
-   - Check client identification
-   - Review rate calculations
-   - Monitor system time
-
-2. **Performance Impact**
-   - Optimize storage method
-   - Use efficient algorithms
-   - Configure appropriate windows
-   - Monitor system resources
-
-## Next Steps
-
-- Explore [Response Caching](caching.md)
-- Learn about [Monitoring](monitoring.md)
-- Review [Best Practices](../guides/best-practices.md)
-
----
-
-<div align="center">
-
-**[← Monitoring](monitoring.md)** | **[Response Caching →](caching.md)**
-
-</div>
+- [Billing and Plans](billing.md)
+- [Dashboard and Metrics](monitoring.md)
+- [API Keys](api-keys.md)

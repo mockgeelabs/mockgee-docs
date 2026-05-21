@@ -1,431 +1,122 @@
 # Best Practices
 
-<div align="center">
+Use these practices to keep Mockgee workspaces easy to understand and reliable in test automation.
 
-# 📚 Mockgee Best Practices
-### Optimize Your API Mocking Workflow
+## Organize Mocks By API Boundary
 
-[![Guide Type](https://img.shields.io/badge/Guide-Best_Practices-success?style=for-the-badge)](https://docs.mockgee.com/guides/best-practices)
-[![Level](https://img.shields.io/badge/Level-Advanced-blue?style=for-the-badge)](https://docs.mockgee.com/guides/best-practices)
+Create one API Mock for each logical API or service boundary.
 
-</div>
+Good examples:
 
-## Overview
+- `Customer API`
+- `Payments API`
+- `Orders API`
+- `Public GraphQL API`
 
-This guide outlines best practices for using Mockgee effectively, covering organization, performance, testing strategies, and common pitfalls to avoid.
+Avoid mixing unrelated domains in the same mock API. AI chat mocks, Tool Calls, and MCP simulation belong under **AI Mocks**.
 
-## Organization
+## Prefer Clear Paths And Descriptions
 
-### 1. 📁 Project Structure
+Use realistic paths and short descriptions so teammates can quickly understand what a sample is for.
 
-#### Recommended Hierarchy
-```
-Project Root
-├── Core APIs
-│   ├── Authentication
-│   ├── User Management
-│   └── Common Services
-├── Feature APIs
-│   ├── Feature A
-│   └── Feature B
-└── Testing
-    ├── Error Scenarios
-    └── Edge Cases
-```
+Examples:
 
-#### Naming Conventions
-```javascript
-// Endpoint naming
+- `GET /v1/customers/{id}` - customer found
+- `POST /v1/payments` - card declined
+- `GET /v1/orders` - pending orders
+
+## Use Templates For Realistic Data
+
+Use `{{...}}` templates for new dynamic responses.
+
+Examples:
+
+```json
 {
-  "convention": {
-    "format": "[version]/[resource]/[action]",
-    "examples": [
-      "/v1/users/create",
-      "/v2/orders/status"
-    ]
-  }
+  "id": "{{uuid}}",
+  "name": "{{faker.person.fullName}}",
+  "email": "{{faker.internet.email}}",
+  "createdAt": "{{now 'iso'}}"
 }
 ```
 
-### 2. 🏷️ Mock Organization
+Use legacy `$$.` placeholders only when maintaining existing mocks.
 
-```javascript
-// Group related endpoints
-{
-  "group": "User Management",
-  "endpoints": [
-    {
-      "path": "/api/users",
-      "description": "User operations"
-    },
-    {
-      "path": "/api/roles",
-      "description": "Role management"
-    }
-  ]
-}
-```
+## Keep Matching Specific
 
-## Performance Optimization
+Start with the smallest matcher that proves the scenario.
 
-### 1. ⚡ Response Design
+Use:
 
-```javascript
-// Efficient response structure
-{
-  "response": {
-    // Use pagination for large datasets
-    "pagination": {
-      "page": 1,
-      "perPage": 20,
-      "total": 100
-    },
-    // Selective field inclusion
-    "fields": ["id", "name", "email"],
-    // Compressed data when appropriate
-    "compression": "gzip"
-  }
-}
-```
+- path parameters for resource-specific behavior
+- query parameters for filtered lists
+- headers for version/client behavior
+- body matching for command-style requests
 
-### 2. 🎯 Request Matching
+Avoid over-matching every header or body field unless the test needs that precision.
 
-```javascript
-// Optimize matcher order
-{
-  "matchers": [
-    {
-      // Specific matchers first
-      "exact": {
-        "path": "/api/users/123"
-      }
-    },
-    {
-      // Pattern matchers second
-      "pattern": {
-        "path": "/api/users/*"
-      }
-    }
-  ]
-}
-```
+## Model Common Failure Paths
 
-## Testing Strategies
+For each important API, add representative error samples:
 
-### 1. 🧪 Comprehensive Testing
+- validation failure
+- unauthorized request
+- dependency unavailable
+- rate limit response
+- malformed or incomplete downstream response
 
-```javascript
-// Cover all response types
-{
-  "endpoint": "/api/resource",
-  "scenarios": [
-    {
-      "name": "Success",
-      "response": {"status": 200}
-    },
-    {
-      "name": "Validation Error",
-      "response": {"status": 400}
-    },
-    {
-      "name": "Authentication Error",
-      "response": {"status": 401}
-    },
-    {
-      "name": "Server Error",
-      "response": {"status": 500}
-    }
-  ]
-}
-```
+Use fault injection for intermittent behavior and explicit samples for deterministic tests.
 
-### 2. 🔄 Edge Cases
+## Keep Fallback Behavior Intentional
 
-```javascript
-// Handle edge cases
-{
-  "endpoint": "/api/data",
-  "edgeCases": [
-    {
-      "scenario": "Empty Response",
-      "response": {"data": []}
-    },
-    {
-      "scenario": "Maximum Values",
-      "response": {
-        "number": Number.MAX_SAFE_INTEGER,
-        "string": "A".repeat(1000)
-      }
-    },
-    {
-      "scenario": "Special Characters",
-      "response": {
-        "text": "Special chars: !@#$%^&*()"
-      }
-    }
-  ]
-}
-```
+Endpoint rules let unmatched requests return `404`, serve a default response, or proxy upstream.
 
-## Security Best Practices
+Use:
 
-### 1. 🔒 Authentication Simulation
+- `404` while authoring strict mocks
+- default response for broad client compatibility
+- proxy fallback for hybrid integration tests
 
-```javascript
-// Proper auth handling
-{
-  "security": {
-    "authentication": {
-      "headers": {
-        "Authorization": "Bearer ${token}"
-      },
-      "responses": {
-        "valid": {"status": 200},
-        "invalid": {
-          "status": 401,
-          "body": {
-            "error": "Invalid token"
-          }
-        }
-      }
-    }
-  }
-}
-```
+## Use Inline Testing Before Sharing URLs
 
-### 2. 🛡️ Data Protection
+After creating or changing an endpoint:
 
-```javascript
-// Sensitive data handling
-{
-  "dataProtection": {
-    "maskFields": ["password", "ssn", "creditCard"],
-    "sanitizeInput": true,
-    "validateHeaders": true
-  }
-}
-```
+1. Open the API Mock detail page.
+2. Use the inline test action.
+3. Copy the cURL sample if the mock should be shared with another app or CI job.
+4. Check Dashboard metrics after the first real runtime call.
 
-## Response Patterns
+## Separate Secrets From Mock Data
 
-### 1. 📝 Consistent Format
+Do not put real passwords, customer identifiers, tokens, or production payloads in mock responses.
 
-```javascript
-// Standardized response format
-{
-  "response": {
-    "template": {
-      "success": true,
-      "data": {},
-      "metadata": {
-        "timestamp": "$$.timestamp",
-        "version": "1.0"
-      }
-    }
-  }
-}
-```
+Use:
 
-### 2. 🎯 Error Handling
+- placeholder values
+- Faker data
+- workspace API keys stored in a secret manager
+- custom domains only after DNS verification
 
-```javascript
-// Consistent error format
-{
-  "errors": {
-    "template": {
-      "status": "error",
-      "code": "ERR_001",
-      "message": "Error description",
-      "details": []
-    }
-  }
-}
-```
+## Use AI Mocks For Agent Workflows
 
-## Workflow Integration
+Use **AI Mocks** when testing:
 
-### 1. 🔄 Version Control
+- OpenAI-compatible chat completions
+- streaming responses
+- deterministic Tool Calls
+- MCP server simulation
 
-```javascript
-// Version management
-{
-  "versioning": {
-    "strategy": "header",
-    "versions": {
-      "v1": {
-        "active": true,
-        "deprecated": false
-      },
-      "v2": {
-        "active": true,
-        "deprecated": false
-      }
-    }
-  }
-}
-```
+Keep AI behavior separate from REST and GraphQL API mocks so users understand where to configure each workflow.
 
-### 2. 📦 CI/CD Integration
+## Review Usage Regularly
 
-```javascript
-// CI/CD configuration
-{
-  "cicd": {
-    "automatedTests": true,
-    "deploymentValidation": true,
-    "versionCheck": true
-  }
-}
-```
+Use Dashboard metrics to check:
 
-## Common Pitfalls to Avoid
+- total mock invocations
+- status families
+- method breakdown
+- unmatched requests
+- AI streaming activity
+- latency trends
 
-### 1. ❌ Anti-Patterns
-
-```javascript
-// Avoid these patterns
-{
-  "antiPatterns": {
-    "hardcodedValues": false,
-    "inconsistentNaming": false,
-    "missingValidation": false,
-    "incompleteMocking": false
-  }
-}
-```
-
-### 2. 🚫 Common Mistakes
-
-1. Insufficient error scenarios
-2. Inconsistent response formats
-3. Poor organization
-4. Missing documentation
-5. Inadequate testing
-
-## Performance Monitoring
-
-### 1. 📊 Metrics Collection
-
-```javascript
-{
-  "monitoring": {
-    "metrics": [
-      "responseTime",
-      "requestCount",
-      "errorRate",
-      "matchSuccess"
-    ],
-    "alerts": {
-      "slowResponse": "> 1000ms",
-      "highErrorRate": "> 5%"
-    }
-  }
-}
-```
-
-### 2. 📈 Analysis
-
-```javascript
-{
-  "analysis": {
-    "patterns": {
-      "track": [
-        "mostUsedEndpoints",
-        "commonErrors",
-        "responseDistribution"
-      ],
-      "optimize": {
-        "caching": true,
-        "matchingRules": true
-      }
-    }
-  }
-}
-```
-
-## Documentation
-
-### 1. 📝 API Documentation
-
-```javascript
-{
-  "documentation": {
-    "endpoints": {
-      "description": "Detailed endpoint purpose",
-      "parameters": "All possible parameters",
-      "responses": "Expected responses",
-      "examples": "Usage examples"
-    }
-  }
-}
-```
-
-### 2. ✍️ Change Management
-
-```javascript
-{
-  "changes": {
-    "tracking": {
-      "version": "1.2.0",
-      "date": "2024-02-05",
-      "changes": [
-        "Added new endpoint",
-        "Updated response format",
-        "Fixed validation"
-      ]
-    }
-  }
-}
-```
-
-## Maintenance
-
-### 1. 🧹 Regular Cleanup
-
-- Remove unused mocks
-- Archive obsolete versions
-- Update documentation
-- Validate existing mocks
-
-### 2. 🔄 Updates
-
-- Keep response formats current
-- Update mock data regularly
-- Maintain realistic scenarios
-- Review performance metrics
-
-## Checklist for Production
-
-### Before Deployment
-- [ ] All endpoints documented
-- [ ] Error scenarios covered
-- [ ] Response formats consistent
-- [ ] Security measures implemented
-- [ ] Performance tested
-- [ ] Edge cases handled
-- [ ] Documentation updated
-- [ ] Version control configured
-
-### Regular Maintenance
-- [ ] Monitor performance metrics
-- [ ] Review error logs
-- [ ] Update mock data
-- [ ] Clean unused mocks
-- [ ] Validate integrations
-- [ ] Check security compliance
-- [ ] Update documentation
-- [ ] Backup configurations
-
-## Next Steps
-
-- Review [Creating Mocks](creating-mocks.md) for implementation details
-- Explore [Advanced Features](../features/dynamic-mock.md)
-- Check [Troubleshooting Guide](../reference/troubleshooting.md)
-
----
-
-<div align="center">
-
-**[← Creating Mocks](creating-mocks.md)** | **[Features →](../features/README.md)**
-
-</div>
+Unmatched requests are often the fastest way to discover a path, method, or matcher mismatch.

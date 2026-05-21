@@ -56,7 +56,7 @@ Mockgee matches GraphQL requests by explicit `operationName` or by deriving the 
 After the basic endpoint works, add behavior as needed:
 
 - request matchers for path, query, header, or body-specific responses
-- fake data placeholders such as `$$.uuid`, `$$.timestamp`, and `$$.enum(...)`
+- Faker-backed response templates such as `{{faker.person.fullName}}`, request-aware templates such as `{{request.path.id}}`, and legacy placeholders such as `$$.uuid`
 - latency simulation
 - fault/error injection
 - default responses

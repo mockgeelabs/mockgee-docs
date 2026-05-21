@@ -1,248 +1,126 @@
-# Dynamic Mock
+# Dynamic Mocking
 
-<div align="center">
+Dynamic mocking lets one endpoint return different behavior based on the incoming request and endpoint rules.
 
-# 🎭 Dynamic Mock
-### Create Realistic and Dynamic API Responses
+Use it when a static response is not enough: different users, statuses, request payloads, failure cases, fallback behavior, or scenario rotation.
 
-[![Feature Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://docs.mockgee.com/features/dynamic-mock)
-[![Use Case](https://img.shields.io/badge/Use%20Case-Testing-blue?style=for-the-badge)](https://docs.mockgee.com/features/dynamic-mock)
+## Core Concepts
 
-</div>
+| Concept | Purpose |
+| --- | --- |
+| Samples | Multiple saved responses for the same method and path |
+| Request matchers | Query, header, path, and body criteria that select a sample |
+| Scenario selection | First, random, weighted, or sequence selection when multiple samples match |
+| Fallback mode | What happens when no sample matches |
+| Templates | Runtime data generation and request-aware response values |
 
-## Overview
+## Multiple Samples
 
-Dynamic Mocking in Mockgee allows you to create flexible, realistic API responses that can adapt based on request parameters. Instead of static responses, you can simulate real-world API behavior with dynamic data and conditional responses.
+You can create more than one sample for the same endpoint.
 
-## Key Features
+Example:
 
-### 🔄 Multiple Response Configurations
-- Configure different responses for the same endpoint
-- Runtime response selection based on request criteria
-- Support for complex matching patterns
+```text
+GET /v1/customers/{id}
+```
 
-### 🎯 Request-Based Response Selection
-- Match based on path parameters, headers, query parameters, or body content
-- Support for path parameters and dynamic routing
-- Conditional response selection
+Sample 1 can return a Pro customer:
 
-### 🧪 Test Scenario Support
-- Simulate error cases and edge conditions
-- Generate realistic test data
-- Create comprehensive test suites
-
-## Implementation Guide
-
-### Basic Dynamic Mock
-
-```javascript
-// Configure endpoint: GET /api/user/{userId}
+```json
 {
-  "endpoint": "/api/user/{userId}",
-  "method": "GET",
-  "responses": [
-    {
-      "matcher": {
-        "userId": "123"
-      },
-      "response": {
-        "status": 200,
-        "body": {
-          "id": "123",
-          "name": "John Doe",
-          "type": "premium"
-        }
-      }
-    },
-    {
-      "matcher": {
-        "userId": "456"
-      },
-      "response": {
-        "status": 200,
-        "body": {
-          "id": "456",
-          "name": "Jane Smith",
-          "type": "basic"
-        }
-      }
-    }
-  ]
+  "id": "{{request.path.id}}",
+  "name": "{{faker.person.fullName}}",
+  "plan": "pro"
 }
 ```
 
-### Advanced Scenarios
+Sample 2 can return a suspended customer:
 
-#### Error Simulation
-```javascript
+```json
 {
-  "endpoint": "/api/orders",
-  "method": "POST",
-  "responses": [
-    {
-      "matcher": {
-        "headers": {
-          "Authorization": "Bearer invalid"
-        }
-      },
-      "response": {
-        "status": 401,
-        "body": {
-          "error": "Invalid authentication token",
-          "code": "AUTH_001"
-        }
-      }
-    },
-    {
-      "matcher": {
-        "body": {
-          "amount": ">1000"
-        }
-      },
-      "response": {
-        "status": 400,
-        "body": {
-          "error": "Amount exceeds maximum limit",
-          "code": "VAL_002"
-        }
-      }
-    }
-  ]
+  "id": "{{request.path.id}}",
+  "name": "{{faker.person.fullName}}",
+  "plan": "pro",
+  "status": "suspended"
 }
 ```
 
-#### Dynamic Data Generation
-```javascript
+## Request-Specific Responses
+
+Use matchers when the same endpoint should respond differently for different inputs.
+
+Examples:
+
+- `GET /v1/orders?status=pending`
+- `GET /v1/orders?status=shipped`
+- `POST /v1/payments` with `{ "paymentMethod": "card" }`
+- `POST /v1/payments` with `{ "paymentMethod": "wallet" }`
+
+## Scenario Selection
+
+When two or more samples match the same request, endpoint rules decide which sample is served:
+
+- **First match:** deterministic default behavior
+- **Random:** uniform random choice
+- **Weighted:** biased random choice based on per-sample weight
+- **Sequence:** round-robin behavior across samples
+
+Configure this from **Endpoint rules -> Scenario selection**.
+
+## Fallback Behavior
+
+When no sample matches, endpoint rules can:
+
+- return `404`
+- serve a default response
+- proxy the request to an upstream API
+
+Configure this from **Endpoint rules -> Fallback mode**.
+
+## Dynamic Response Data
+
+Use `{{...}}` templates for runtime values:
+
+```json
 {
-  "endpoint": "/api/transactions",
-  "method": "GET",
-  "response": {
-    "status": 200,
-    "body": {
-      "transactionId": "$$.uuid",
-      "timestamp": "$$.timestamp",
-      "amount": "$$.float(4,2)",
-      "status": "$$.enum(pending,completed,failed)",
-      "reference": "$$.int(8)"
-    }
-  }
+  "transactionId": "{{uuid}}",
+  "timestamp": "{{now 'iso'}}",
+  "customerName": "{{faker.person.fullName}}",
+  "amount": "{{random 10 5000}}",
+  "status": "{{one-of 'pending' 'completed' 'failed'}}",
+  "reference": "{{sequence 'transactions'}}"
 }
 ```
 
-## Best Practices
+Mockgee also supports legacy `$$.` placeholders for existing mocks. For new mocks, prefer `{{...}}` templates because they support Faker and request-aware values such as `{{request.path.id}}`, `{{request.query.limit}}`, and `{{request.body.email}}`.
 
-### 1. Response Organization
-- Group related responses together
-- Use meaningful names for response configurations
-- Document the purpose of each response variation
+## Error And Resilience Cases
 
-### 2. Request Matching
-- Start with specific matchers before generic ones
-- Use appropriate matching criteria (headers, query params, body)
-- Include default responses for unmatched requests
+Dynamic mocking works well with delay and fault settings.
 
-### 3. Error Handling
-- Include common error scenarios
-- Use appropriate HTTP status codes
-- Provide meaningful error messages
+Use explicit samples for deterministic outcomes:
 
-## Common Use Cases
-
-### 1. User Authentication Flow
-```javascript
-// POST /api/login
+```json
 {
-  "responses": [
-    {
-      "matcher": {
-        "body": {
-          "username": "valid_user",
-          "password": "correct_pass"
-        }
-      },
-      "response": {
-        "status": 200,
-        "body": {
-          "token": "$$.uuid",
-          "expiresIn": 3600
-        }
-      }
-    },
-    {
-      "matcher": {
-        "body": {
-          "username": "*",
-          "password": "*"
-        }
-      },
-      "response": {
-        "status": 401,
-        "body": {
-          "error": "Invalid credentials"
-        }
-      }
-    }
-  ]
+  "error": "Card declined",
+  "code": "payment_declined"
 }
 ```
 
-### 2. Conditional Business Logic
-```javascript
-// GET /api/pricing
-{
-  "responses": [
-    {
-      "matcher": {
-        "query": {
-          "region": "US",
-          "tier": "premium"
-        }
-      },
-      "response": {
-        "price": 99.99,
-        "currency": "USD"
-      }
-    },
-    {
-      "matcher": {
-        "query": {
-          "region": "EU",
-          "tier": "premium"
-        }
-      },
-      "response": {
-        "price": 89.99,
-        "currency": "EUR"
-      }
-    }
-  ]
-}
-```
+Use fault injection when the client should experience intermittent failure.
 
-## Troubleshooting
+## Recommended Workflow
 
-### Common Issues
+1. Create the happy-path sample first.
+2. Add request matchers only where behavior needs to differ.
+3. Add error samples for deterministic test cases.
+4. Use scenario selection for random, weighted, or sequence behavior.
+5. Add fallback behavior only when unmatched requests should be handled deliberately.
+6. Verify with inline testing and Dashboard unmatched requests.
 
-1. **Response Not Matching**
-   - Verify matcher configuration
-   - Check request format matches exactly
-   - Confirm header case sensitivity
+## Related Pages
 
-2. **Dynamic Data Issues**
-   - Validate dynamic data syntax
-   - Check supported data types
-   - Verify format specifications
-
-## Next Steps
-
-- Explore [Request Matcher](request-matcher.md) for advanced matching
-- Learn about [Fake Data](fake-data.md) generation
-- Check [Best Practices](../guides/best-practices.md) for more tips
-
----
-
-<div align="center">
-
-**[← Back to Features](../features/README.md)** | **[Request Matcher →](request-matcher.md)**
-
-</div>
+- [Request Matcher](request-matcher.md)
+- [Fake Data and Templates](fake-data.md)
+- [Default Responses](../guides/default-responses.md)
+- [Delay and Faults](delay.md)

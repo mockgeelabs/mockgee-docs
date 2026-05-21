@@ -13,9 +13,10 @@ Webhooks let Mockgee notify another system when a mock endpoint is matched.
 ## Attach a Webhook
 
 1. Open **Build -> API Mocks**.
-2. Select a project and endpoint.
-3. Configure the endpoint's webhook behavior.
-4. Save.
+2. Select a mock API and endpoint.
+3. Open **Endpoint rules**.
+4. Configure the endpoint's webhook behavior.
+5. Save.
 
 When the endpoint matches at runtime, Mockgee dispatches the webhook asynchronously.
 

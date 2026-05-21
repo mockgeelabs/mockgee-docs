@@ -8,10 +8,10 @@ Mockgee SaaS combines API mocking, AI simulation, workspace administration, and 
 - [REST and GraphQL](/features/rest-graphql.md): create endpoint and operation mocks.
 - [Dynamic Mocking](/features/dynamic-mock.md): return different responses for the same endpoint.
 - [Request Matcher](/features/request-matcher.md): match by path, query, headers, and body.
-- [Fake Data](/features/fake-data.md): generate dynamic values in responses.
+- [Fake Data and Templates](/features/fake-data.md): generate realistic Faker data, request-aware templates, and legacy dynamic values.
 - [Default Responses](/guides/default-responses.md): define fallback behavior.
-- [Response Mapping](/features/mapping.md): copy request data into responses.
-- [Response Delay](/features/delay.md): simulate latency.
+- [Response Mapping](/features/mapping.md): copy request data into responses with templates.
+- [Delay and Faults](/features/delay.md): simulate latency, jitter, intermittent errors, and dropped connections.
 
 ## AI Simulation
 

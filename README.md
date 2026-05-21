@@ -19,7 +19,7 @@ Mockgee helps teams build and test integrations without waiting on live systems.
 - REST endpoints with custom methods, paths, headers, status codes, and response bodies.
 - GraphQL operation mocks matched by `operationName` or query text.
 - Request-specific responses using path, query, header, and payload matchers.
-- Fake data, response mapping, default responses, latency, and fault scenarios.
+- Faker-backed fake data, request-aware response templates, legacy dynamic placeholders, response mapping, default responses, latency, and fault scenarios.
 
 ### AI and Agent Workflows
 

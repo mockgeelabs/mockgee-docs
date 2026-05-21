@@ -1,276 +1,91 @@
 # Response Mapping
 
-<div align="center">
+Response mapping in the current SaaS version is handled through `{{...}}` response templates.
 
-# 🔄 Response Mapping
-### Inject Request Data into Mock Responses
+Use templates to copy request data into the mock response, generate realistic Faker data, add timestamps, or echo request headers.
 
-[![Feature Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://docs.mockgee.com/features/mapping)
-[![Use Case](https://img.shields.io/badge/Use%20Case-Dynamic_Response-blue?style=for-the-badge)](https://docs.mockgee.com/features/mapping)
+## Request Mapping Syntax
 
-</div>
+| Template | Reads from |
+| --- | --- |
+| `{{request.body.email}}` | Parsed JSON request body |
+| `{{request.headers.x-request-id}}` | Request headers |
+| `{{request.query.limit}}` | Query string |
+| `{{request.path.id}}` | Path parameters from `/customers/{id}` or `/customers/:id` |
 
-## Overview
+## Example
 
-Response Mapping allows you to dynamically inject data from incoming requests into your mock responses. Use data from request payload, query parameters, or path parameters to create contextual responses.
+Mock path:
 
-## Key Features
+```text
+POST /v1/customers/{id}/orders
+```
 
-### 🎯 Data Source Support
-- Request body mapping
-- Query parameter injection
-- Path parameter usage
-- Header value access
+Response body:
 
-### 🔄 Mapping Syntax
-Use `$request` to reference request data:
-- `$request.body` - Access request payload
-- `$request.query` - Access query parameters
-- `$request.params` - Access path parameters
-- `$request.headers` - Access request headers
-
-## Implementation Guide
-
-### Basic Mapping
-
-```javascript
-// Request
-POST /api/users
+```json
 {
-    "name": "John Doe",
-    "email": "john@example.com"
-}
-
-// Response Configuration
-{
-    "response": {
-        "body": {
-            "message": "Hello, $request.body.name!",
-            "userEmail": "$request.body.email"
-        }
-    }
-}
-
-// Generated Response
-{
-    "message": "Hello, John Doe!",
-    "userEmail": "john@example.com"
+  "orderId": "ord_{{sequence 'orders'}}",
+  "customerId": "{{request.path.id}}",
+  "email": "{{request.body.email}}",
+  "requestId": "{{request.headers.x-request-id}}",
+  "status": "{{one-of 'pending' 'confirmed'}}",
+  "createdAt": "{{now 'iso'}}"
 }
 ```
 
-### Advanced Mapping Scenarios
+Example request:
 
-#### 1. Nested Object Mapping
-```javascript
-// Request
-POST /api/orders
-{
-    "order": {
-        "items": [
-            {
-                "productId": "123",
-                "quantity": 2
-            }
-        ],
-        "shipping": {
-            "address": "123 Main St"
-        }
-    }
-}
+```bash
+curl "https://<workspace>.<MOCK_BASE_DOMAIN>/v1/customers/cus_123/orders" \
+  -H "Content-Type: application/json" \
+  -H "x-request-id: req_001" \
+  -d '{"email":"customer@example.com"}'
+```
 
-// Response Configuration
+Example response:
+
+```json
 {
-    "response": {
-        "body": {
-            "confirmation": {
-                "items": "$request.body.order.items",
-                "shippingTo": "$request.body.order.shipping.address"
-            }
-        }
-    }
+  "orderId": "ord_1",
+  "customerId": "cus_123",
+  "email": "customer@example.com",
+  "requestId": "req_001",
+  "status": "confirmed",
+  "createdAt": "2026-05-21T10:30:00.000Z"
 }
 ```
 
-#### 2. Query Parameter Mapping
-```javascript
-// Request
-GET /api/search?category=books&sort=price
+## Header Mapping
 
-// Response Configuration
+Response headers can also use templates:
+
+```json
 {
-    "response": {
-        "body": {
-            "searchResults": [],
-            "filters": {
-                "appliedCategory": "$request.query.category",
-                "sortOrder": "$request.query.sort"
-            }
-        }
-    }
+  "x-request-id": "{{request.headers.x-request-id}}",
+  "x-mock-sequence": "{{sequence 'responses'}}"
 }
 ```
 
-#### 3. Path Parameter Mapping
-```javascript
-// Request
-GET /api/users/123/profile
+## Faker And Helpers
 
-// Response Configuration
+Templates can be mixed with Faker and built-in helpers:
+
+```json
 {
-    "response": {
-        "body": {
-            "userId": "$request.params.userId",
-            "requestedAt": "$$.timestamp"
-        }
-    }
+  "id": "{{uuid}}",
+  "name": "{{faker.person.fullName}}",
+  "company": "{{faker.company.name}}",
+  "servedAt": "{{now 'iso'}}"
 }
 ```
 
-## Advanced Features
+## Legacy Mapping
 
-### 🔄 Conditional Mapping
-Map different responses based on request data:
+Older documentation referenced `$request...` mapping expressions and transformation functions. For the SaaS UI, use `{{request...}}` templates instead. Legacy dynamic `$$.` placeholders still work for existing mocks, but they do not read request data.
 
-```javascript
-{
-    "response": {
-        "body": {
-            "status": {
-                "if": "$request.body.type == 'premium'",
-                "then": "Priority Processing",
-                "else": "Standard Processing"
-            },
-            "estimatedTime": {
-                "if": "$request.body.type == 'premium'",
-                "then": "1-2 days",
-                "else": "3-5 days"
-            }
-        }
-    }
-}
-```
+## Related Pages
 
-### 📝 Data Transformation
-Transform request data before mapping:
-
-```javascript
-{
-    "response": {
-        "body": {
-            "upperName": "$uppercase($request.body.name)",
-            "formattedDate": "$formatDate($request.body.date, 'YYYY-MM-DD')",
-            "totalPrice": "$multiply($request.body.quantity, $request.body.price)"
-        }
-    }
-}
-```
-
-### 🔍 Complex Data Manipulation
-Combine multiple request values:
-
-```javascript
-{
-    "response": {
-        "body": {
-            "fullAddress": "$concat([
-                $request.body.address.street,
-                ', ',
-                $request.body.address.city,
-                ', ',
-                $request.body.address.country
-            ])"
-        }
-    }
-}
-```
-
-## Best Practices
-
-### 1. Data Validation
-- Verify request data exists
-- Provide default values
-- Handle missing fields
-
-### 2. Security
-- Sanitize mapped data
-- Validate data types
-- Filter sensitive information
-
-### 3. Performance
-- Optimize mapping paths
-- Use efficient transformations
-- Cache when possible
-
-## Common Use Cases
-
-### 1. Form Submission Response
-```javascript
-// Request
-POST /api/submit
-{
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "john@example.com"
-}
-
-// Response Configuration
-{
-    "response": {
-        "body": {
-            "confirmation": {
-                "message": "Thank you, $request.body.firstName $request.body.lastName!",
-                "emailSentTo": "$request.body.email",
-                "submittedAt": "$$.timestamp"
-            }
-        }
-    }
-}
-```
-
-### 2. Search API Response
-```javascript
-// Request
-GET /api/search?term=example&page=1
-
-// Response Configuration
-{
-    "response": {
-        "body": {
-            "searchTerm": "$request.query.term",
-            "currentPage": "$request.query.page",
-            "results": [],
-            "metadata": {
-                "query": "$request.query"
-            }
-        }
-    }
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Missing Data**
-   - Check request format
-   - Verify mapping paths
-   - Add default values
-
-2. **Type Mismatches**
-   - Validate data types
-   - Use appropriate transformations
-   - Check format consistency
-
-## Next Steps
-
-- Explore [Dynamic Mock](dynamic-mock.md)
-- Learn about [Request Matcher](request-matcher.md)
-- Check [Response Delay](delay.md) feature
-
----
-
-<div align="center">
-
-**[← Proxy Mode](proxy.md)** | **[Response Delay →](delay.md)**
-
-</div>
+- [Fake Data and Templates](fake-data.md)
+- [Request Matcher](request-matcher.md)
+- [Dynamic Mocking](dynamic-mock.md)

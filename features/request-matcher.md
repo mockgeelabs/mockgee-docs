@@ -1,294 +1,119 @@
 # Request Matcher
 
-<div align="center">
+Request matching decides which saved sample Mockgee returns for an incoming request.
 
-# 🎯 Request Matcher
-### Precise API Response Control Through Advanced Request Matching
+Mockgee first matches by HTTP method and path. It can then use request details such as path parameters, query values, headers, and request body to choose the right sample.
 
-[![Feature Status](https://img.shields.io/badge/Status-Stable-success?style=for-the-badge)](https://docs.mockgee.com/features/request-matcher)
-[![Use Case](https://img.shields.io/badge/Use%20Case-Routing-blue?style=for-the-badge)](https://docs.mockgee.com/features/request-matcher)
+## What Can Be Matched
 
-</div>
+| Request part | Use for |
+| --- | --- |
+| Method | Separate `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` behavior |
+| Path | Match static paths such as `/v1/customers` |
+| Path parameters | Match paths such as `/v1/customers/{id}` or `/v1/customers/:id` |
+| Query parameters | Differentiate requests such as `?status=active` |
+| Headers | Match API version, authorization shape, request IDs, or client type |
+| Body | Match JSON/XML request payloads for non-GET methods |
 
-## Overview
+## Path Parameters
 
-The Request Matcher is a powerful feature that allows you to configure how Mockgee responds to different API requests. Match requests based on path parameters, query strings, headers, and payload content to return specific responses.
+Create a mock path with a parameter:
 
-## Matching Capabilities
-
-### 🛣️ Path Parameters
-Match dynamic segments in URL paths:
-
-```javascript
-// Configuration
-{
-  "path": "/api/users/{userId}/profile",
-  "pathParams": {
-    "userId": "12345"
-  },
-  "response": {
-    "name": "John Doe",
-    "email": "john@example.com"
-  }
-}
-
-// Matches
-GET /api/users/12345/profile
+```text
+GET /v1/customers/{id}
 ```
 
-### 🔍 Query String Matching
+Then use a sample path value such as:
 
-#### Static Query Matching
-```javascript
-// Configuration
+```json
 {
-  "path": "/api/products",
-  "queryParams": {
-    "category": "electronics",
-    "sort": "price"
-  }
-}
-
-// Matches
-GET /api/products?category=electronics&sort=price
-```
-
-#### Dynamic Query Matching
-```javascript
-// Configuration
-{
-  "path": "/api/users",
-  "queryParams": "*"
-}
-
-// Matches any query parameters
-GET /api/users?any=parameter&will=match
-```
-
-### 📋 Header Matching
-
-```javascript
-// Configuration
-{
-  "headers": {
-    "Authorization": "Bearer *",
-    "Content-Type": "application/json",
-    "x-api-version": "1.0"
-  }
-}
-
-// Matches
-Headers:
-Authorization: Bearer xyz123
-Content-Type: application/json
-x-api-version: 1.0
-```
-
-### 📦 Payload Matching
-
-#### Full Payload Match
-```javascript
-// Configuration
-{
-  "method": "POST",
-  "payload": {
-    "type": "premium",
-    "quantity": 5,
-    "options": {
-      "color": "blue"
-    }
-  }
-}
-
-// Must match exactly
-POST /api/orders
-{
-  "type": "premium",
-  "quantity": 5,
-  "options": {
-    "color": "blue"
-  }
+  "id": "cus_123"
 }
 ```
 
-#### Specific Field Match
-```javascript
-// Configuration
-{
-  "matchFields": ["id", "type"],
-  "payload": {
-    "id": "12345",
-    "type": "standard"
-  }
-}
+At runtime, a request to `/v1/customers/cus_123` can match that sample.
 
-// Matches (other fields ignored)
+You can also echo the path value in a response:
+
+```json
 {
-  "id": "12345",
-  "type": "standard",
-  "anyOtherField": "ignored"
+  "id": "{{request.path.id}}",
+  "name": "{{faker.person.fullName}}"
 }
 ```
 
-#### Field Ignoring
-```javascript
-// Configuration
-{
-  "ignoreFields": ["timestamp", "requestId"],
-  "payload": {
-    "action": "process",
-    "data": "important"
-  }
-}
+## Query Matching
 
-// Matches (specified fields ignored)
+Use query parameters when the same endpoint returns different responses by filter.
+
+Example:
+
+```text
+GET /v1/orders?status=pending
+GET /v1/orders?status=shipped
+```
+
+Create separate samples with different query values to return different bodies.
+
+## Header Matching
+
+Use header matching for versioning, client behavior, auth simulation, or correlation IDs.
+
+Example headers:
+
+```json
 {
-  "action": "process",
-  "data": "important",
-  "timestamp": "any-value",
-  "requestId": "any-value"
+  "x-api-version": "2026-05",
+  "x-client-type": "mobile"
 }
 ```
 
-## Advanced Features
+Response templates can also echo incoming headers:
 
-### 1. Combined Matching
-```javascript
+```json
 {
-  "path": "/api/orders/{orderId}",
-  "pathParams": {
-    "orderId": "ORD-*"
-  },
-  "headers": {
-    "Authorization": "Bearer *"
-  },
-  "queryParams": {
-    "include": "details"
-  }
+  "requestId": "{{request.headers.x-request-id}}"
 }
 ```
 
-### 2. Regular Expressions
-```javascript
+## Body Matching
+
+For `POST`, `PUT`, and `PATCH` mocks, request body matching lets you return different samples for different payloads.
+
+Example:
+
+```json
 {
-  "path": "/api/products/{productId}",
-  "pathParams": {
-    "productId": "^PRD-\\d{6}$"
-  }
+  "paymentMethod": "card",
+  "amount": 1000
 }
 ```
 
-### 3. Nested Object Matching
-```javascript
-{
-  "payload": {
-    "user": {
-      "profile": {
-        "type": "premium"
-      }
-    }
-  }
-}
-```
+Create another sample for a different payload to simulate validation errors, edge cases, or alternate business outcomes.
 
-## Best Practices
+## Multiple Matching Samples
 
-### 1. Matcher Organization
-- Order matchers from most specific to least specific
-- Group related matchers together
-- Use clear naming conventions
+If more than one sample matches the same request, endpoint rules can choose which sample is served:
 
-### 2. Path Parameters
-- Use descriptive parameter names
-- Consider using regex for complex patterns
-- Provide fallback matches
+- **First match:** serve the first matching sample
+- **Random:** choose a matching sample at random
+- **Weighted:** bias selection by per-sample weight
+- **Sequence:** rotate across matching samples
 
-### 3. Query Parameters
-- Handle optional parameters appropriately
-- Consider parameter order variations
-- Use wildcards judiciously
+Configure this from **Endpoint rules -> Scenario selection**.
 
-### 4. Headers
-- Case-sensitive matching
-- Handle optional headers
-- Consider common variations
+## No Matching Sample
 
-### 5. Payload
-- Match only necessary fields
-- Handle nested objects carefully
-- Consider data type variations
+If no sample matches, endpoint rules decide the fallback:
 
-## Troubleshooting
+- return `404`
+- serve a default response
+- proxy to an upstream API
 
-### Common Issues
+Configure this from **Endpoint rules -> Fallback mode**.
 
-1. **Match Not Working**
-   - Verify exact path structure
-   - Check case sensitivity
-   - Validate regex patterns
+## Related Pages
 
-2. **Multiple Matches**
-   - Review matcher order
-   - Check specificity levels
-   - Verify matching rules
-
-## Examples
-
-### Authentication Flow
-```javascript
-{
-  "path": "/api/auth",
-  "method": "POST",
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "payload": {
-    "username": "*",
-    "password": "*"
-  },
-  "responses": [
-    {
-      "match": {
-        "payload": {
-          "username": "valid_user",
-          "password": "correct_pass"
-        }
-      },
-      "response": {
-        "status": 200,
-        "body": {
-          "token": "$$.uuid"
-        }
-      }
-    }
-  ]
-}
-```
-
-### Complex Product Search
-```javascript
-{
-  "path": "/api/products/search",
-  "method": "GET",
-  "queryParams": {
-    "category": "*",
-    "minPrice": "^\\d+(\\.\\d{1,2})?$",
-    "maxPrice": "^\\d+(\\.\\d{1,2})?$",
-    "sort": "^(price|rating)_(asc|desc)$"
-  }
-}
-```
-
-## Next Steps
-
-- Explore [Dynamic Mock](dynamic-mock.md) for response generation
-- Learn about [Fake Data](fake-data.md) for realistic responses
-- Check [Best Practices](../guides/best-practices.md) for more tips
-
----
-
-<div align="center">
-
-**[← Dynamic Mock](dynamic-mock.md)** | **[Fake Data →](fake-data.md)**
-
-</div>
+- [Dynamic Mocking](dynamic-mock.md)
+- [Fake Data and Templates](fake-data.md)
+- [Default Responses](../guides/default-responses.md)
