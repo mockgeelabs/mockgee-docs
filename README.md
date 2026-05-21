@@ -1,106 +1,92 @@
-<div align="center">
+# Mockgee SaaS Documentation
 
-# 🚀 Mockgee
-### The Leading API Mocking Solution for Modern Development
+Mockgee helps teams build and test integrations without waiting on live systems. Create REST and GraphQL mock APIs, simulate OpenAI-compatible AI responses, test deterministic agent Tool Calls, and expose selected tools through MCP server endpoints.
 
-[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://docs.mockgee.com/getting-started/setup#docker)
-[![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://docs.mockgee.com/getting-started/setup#ubuntu-os)
+## Start Fast
 
-</div>
+| Goal | Start here |
+| --- | --- |
+| Create your first mock API | [Quick Start](/getting-started/quickstart.md) |
+| Build REST or GraphQL endpoints | [API Mocks](/features/api-projects.md) |
+| Test OpenAI-compatible chat | [AI Mocks](/features/ai-mocks.md) |
+| Mock agent tool execution | [Tool Calls](/features/tool-calls.md) |
+| Connect an MCP client | [MCP Server Simulation](/features/mcp-server.md) |
 
-## Why Mockgee?
+## What You Can Simulate
 
-Mockgee is your comprehensive solution for API mocking needs, trusted by industry leaders. Whether you're developing new services, testing integrations, or maintaining existing APIs, Mockgee provides the tools you need for efficient development and testing.
+### API Workflows
 
-### Key Benefits
+- REST endpoints with custom methods, paths, headers, status codes, and response bodies.
+- GraphQL operation mocks matched by `operationName` or query text.
+- Request-specific responses using path, query, header, and payload matchers.
+- Fake data, response mapping, default responses, latency, and fault scenarios.
 
-- 🔄 **Dynamic Response Generation** - Create realistic test scenarios with dynamic data
-- 🎯 **Precise Request Matching** - Match requests based on headers, payload, or parameters
-- 🔌 **Easy Integration** - Import from Swagger, WSDL, or Postman collections
-- 🛠 **Developer-Friendly** - Intuitive UI and comprehensive API support
-- 🌐 **Cross-Origin Support** - Built-in CORS support for web applications
+### AI and Agent Workflows
 
-## Quick Start
+- OpenAI-compatible `POST /v1/chat/completions` responses.
+- Streaming `text/event-stream` chat chunks ending with `data: [DONE]`.
+- Deterministic Tool Calls with JSON schema validation and invocation history.
+- MCP server profiles that expose selected active tools to MCP-compatible clients.
 
-Get up and running in seconds with Docker:
+### Workspace Operations
+
+- Import from OpenAPI, Postman, or Mockgee native exports.
+- Verify mocks with inline endpoint testing, cURL samples, and dataplane calls.
+- Watch invocation stats, latency, AI stream usage, and unmatched requests.
+- Manage users, API keys, custom domains, billing, audit logs, and webhooks.
+
+## Runtime Model
+
+Mockgee separates management traffic from mock runtime traffic.
+
+| Surface | Purpose | Example |
+| --- | --- | --- |
+| Management UI | Create mocks and manage workspace settings | `https://<workspace>.<APP_BASE_DOMAIN>` |
+| Mock dataplane | Serve mock API, AI, Tool Call, and MCP traffic | `https://<workspace>.<MOCK_BASE_DOMAIN>` |
+
+Local development commonly uses:
+
+```text
+http://<workspace>.localhost:8001      # management control plane
+http://<workspace>.localhost:8085      # mock dataplane
+```
+
+## Common Runtime Examples
+
+REST:
 
 ```bash
-docker run -p 8000:8000 -p 8085:8085 mockgee/mockgee:latest
+curl "https://<workspace>.<MOCK_BASE_DOMAIN>/v1/customers/123"
 ```
 
-Access your Mockgee instance:
-- 🖥️ UI Dashboard: [http://localhost:8000](http://localhost:8000)
-- 🔌 Mock API Endpoint: Port 8085
+AI chat:
 
-## Features at a Glance
-
-### Dynamic Mocking
-Create varied responses for different test scenarios:
-```json
-{
-    "id": "$$.uuid",
-    "timestamp": "$$.timestamp",
-    "status": "$$.enum(active,pending,completed)"
-}
+```bash
+curl "https://<workspace>.<MOCK_BASE_DOMAIN>/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"Demo"}]}'
 ```
 
-### Request Matching
-Match requests with precision:
-```javascript
-// Path Parameters
-/api/users/{userId}
+Tool Call:
 
-// Query Strings
-/api/products?category=electronics&sort=price
-
-// Headers
-Authorization: Bearer {token}
+```bash
+curl "https://<workspace>.<MOCK_BASE_DOMAIN>/mockgee/tools/customer.lookup" \
+  -H "Content-Type: application/json" \
+  -d '{"arguments":{"customerId":"cus_123"}}'
 ```
 
-### Import Support
-Bring your existing API definitions:
-- OpenAPI/Swagger
-- WSDL
-- Postman Collections
-- CSV/JSON Files
+MCP:
 
-## Getting Started
+```bash
+curl "https://<workspace>.<MOCK_BASE_DOMAIN>/mockgee/mcp/server/customer-support" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
 
-1. [Installation Guide](getting-started/setup.md) - Set up Mockgee in your environment
-2. [Creating Your First Mock](guides/creating-mocks.md) - Learn the basics of creating mocks
-3. [Best Practices](guides/best-practices.md) - Tips for effective API mocking
+## Recommended Reading
 
-## Use Cases
-
-- 🧪 **Testing & QA**
-  - Simulate various API responses
-  - Test error scenarios
-  - Validate edge cases
-
-- 🔄 **Development**
-  - Work offline
-  - Parallel development
-  - Quick prototyping
-
-- 🤝 **Integration**
-  - Third-party API simulation
-  - Service virtualization
-  - Contract testing
-
-## Community and Support
-
-- 📖 [Documentation](https://docs.mockgee.com)
-- 💬 [Community Forum](https://community.mockgee.com)
-- 🐛 [Issue Tracker](https://github.com/mockgeelabs/mockgee/issues)
-
-## License
-
-Mockgee is licensed under the [MIT License](LICENSE).
-
----
-
-<div align="center">
-
-**[Get Started →](guides/creating-mocks)**
-
-</div>
+1. [Quick Start](/getting-started/quickstart.md)
+2. [Creating Mocks](/guides/creating-mocks.md)
+3. [Features Overview](/features/README.md)
+4. [API Reference](/reference/api.md)
+5. [Troubleshooting](/reference/troubleshooting.md)
